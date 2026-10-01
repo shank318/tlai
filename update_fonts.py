@@ -7,7 +7,7 @@ def update_css(file_path):
     # Increase font-size: Xpx
     def repl_font_size(match):
         size = int(match.group(1))
-        if 6 <= size <= 15:
+        if 8 <= size <= 14:
             return f"font-size:{size+2}px"
         return match.group(0)
         
@@ -18,7 +18,7 @@ def update_css(file_path):
         prefix = match.group(1) or ''
         size = int(match.group(2))
         suffix = match.group(3)
-        if 6 <= size <= 15:
+        if 8 <= size <= 14:
             return f"font:{prefix}{size+2}px{suffix}"
         return match.group(0)
     
