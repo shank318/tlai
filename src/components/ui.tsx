@@ -1,4 +1,6 @@
-import { useEffect, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
+import { Children, isValidElement, useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { ArrowRight, Check, ChevronDown, FileCode2, Menu, X } from 'lucide-react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { createClient } from '@supabase/supabase-js'
@@ -6,10 +8,10 @@ import { primitiveById, primitives, type Approach, type Problem, type Primitive,
 
 export function Header() {
   const [open, setOpen] = useState(false)
-  return <header className="header"><div className="nav-wrap"><Link className="brand" to="/" onClick={()=>setOpen(false)}><span className="brand-mark">T<span>/</span>AI</span><span>ThinkLikeAIEngineer<span className="brand-period">.</span></span></Link><button className="menu-button" aria-label="Toggle navigation" aria-expanded={open} aria-controls="main-navigation" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button><nav id="main-navigation" className={open?'nav open':'nav'}><NavLink to="/problems" onClick={()=>setOpen(false)}>Problems</NavLink><NavLink to="/primitives" onClick={()=>setOpen(false)}>Functions</NavLink><Link className="button small" to="/waitlist" onClick={()=>setOpen(false)}>Join waitlist <ArrowRight size={14}/></Link></nav></div></header>
+  return <header className="header"><div className="nav-wrap"><Link className="brand" to="/" onClick={()=>setOpen(false)}><span className="brand-mark">T<span>/</span>AI</span><span>ThinkLikeAIEngineer<span className="brand-period">.</span></span></Link><button className="menu-button" aria-label="Toggle navigation" aria-expanded={open} aria-controls="main-navigation" onClick={()=>setOpen(!open)}>{open?<X/>:<Menu/>}</button><nav id="main-navigation" className={open?'nav open':'nav'}><NavLink to="/problems" onClick={()=>setOpen(false)}>Problems</NavLink><NavLink to="/primitives" onClick={()=>setOpen(false)}>Primitives</NavLink><Link className="button small" to="/waitlist" onClick={()=>setOpen(false)}>Join waitlist <ArrowRight size={14}/></Link></nav></div></header>
 }
 
-export function Footer() { return <footer><div className="footer-inner"><div><div className="brand"><span className="brand-mark">T<span>/</span>AI</span><span>ThinkLikeAIEngineer<span className="brand-period">.</span></span></div><p>Practical mental models for building with AI.</p></div><div className="footer-links"><Link to="/problems">Problems</Link><Link to="/primitives">Functions</Link><Link to="/waitlist">Waitlist</Link></div></div></footer> }
+export function Footer() { return <footer><div className="footer-inner"><div><div className="brand"><span className="brand-mark">T<span>/</span>AI</span><span>ThinkLikeAIEngineer<span className="brand-period">.</span></span></div><p>Practical mental models for building with AI.</p></div><div className="footer-links"><Link to="/problems">Problems</Link><Link to="/primitives">Primitives</Link><Link to="/waitlist">Waitlist</Link></div></div></footer> }
 
 export function Page({children}: {children: ReactNode}) {
   const { pathname } = useLocation()
@@ -28,12 +30,12 @@ function primitiveStyle(primitive: Primitive): CSSProperties {
 
 export function PrimitiveName({id}: {id: PrimitiveId}) {
   const primitive = primitiveById(id)!
-  return <span className="primitive-name" style={primitiveStyle(primitive)}>{primitive.name}</span>
+  return <span className="primitive-name" style={primitiveStyle(primitive)}>{primitive.id}()</span>
 }
 
 export function PrimitiveLink({id, children, inline=false}: {id: PrimitiveId; children?: ReactNode; inline?: boolean}) {
   const primitive = primitiveById(id)!
-  return <Link className={inline?'primitive-call':'primitive-badge'} to={`/primitives/${id}`} style={primitiveStyle(primitive)} data-primitive={id} title={`${primitive.name}\n${primitive.capability}\nReturns: ${primitive.returns}`} aria-label={`${primitive.name} — open function documentation`}>{children ?? primitive.name}</Link>
+  return <Link className={inline?'primitive-call':'primitive-badge'} to={`/primitives/${id}`} style={primitiveStyle(primitive)} data-primitive={id} data-tooltip={primitive.short} title={primitive.short} aria-label={`${primitive.name} — learn this teaching primitive`}>{children ?? `${primitive.id}()`}</Link>
 }
 
 function codeTokens(code: string): ReactNode[] {
@@ -60,22 +62,60 @@ function codeTokens(code: string): ReactNode[] {
   return tokens
 }
 
-export function PseudoCode({code, label='CODE USAGE', compact=false}: {code: string; label?: string; compact?: boolean}) {
-  return <div className={`pseudo-code ${compact?'compact':''}`}><div className="code-toolbar"><span><FileCode2 size={15}/>{label}</span><span>TypeScript · pseudo-code</span></div><pre tabIndex={0} aria-label="TypeScript pseudo-code"><code>{codeTokens(code)}</code></pre><div className="code-footer"><span className="code-color-dot"/>Colored functions are clickable. Everything else is ordinary application code.</div></div>
+export function PseudoCode({code, label='THE PROGRAM', compact=false}: {code: string; label?: string; compact?: boolean}) {
+  return <div className={`pseudo-code ${compact?'compact':''}`}><div className="code-toolbar"><span><FileCode2 size={15}/>{label}</span><span>TypeScript · pseudo-code</span></div><pre tabIndex={0} aria-label="TypeScript pseudo-code"><code>{codeTokens(code)}</code></pre><div className="code-footer"><span className="code-color-dot"/>Colored calls are AI primitives. Hover to learn; click to explore. Everything else is ordinary code.</div></div>
 }
 
 export function ProblemCard({problem}: {problem: Problem}) { return <Link to={`/problems/${problem.slug}`} className="problem-card"><div className="card-meta"><span>{problem.category}</span><span>{problem.difficulty}</span></div><h3>{problem.title}</h3><p>{problem.description}</p><div className="problem-functions">{[...new Set(problem.approaches.flatMap(a=>a.primitives))].slice(0,4).map(id=><PrimitiveName key={id} id={id}/>)}</div><div className="card-footer"><span>{problem.approaches.length} approaches</span><ArrowRight size={17}/></div></Link> }
 export function ProblemList({problems}: {problems: Problem[]}) { return <div className="problem-grid">{problems.map(p=><ProblemCard key={p.slug} problem={p}/>)}</div> }
 
-export function PrimitiveDiagram({primitive}: {primitive: Primitive}) { return <div className="function-diagram" style={primitiveStyle(primitive)}><div><span>INPUT</span><code>{primitive.input}</code></div><ArrowRight aria-hidden="true"/><strong>{primitive.name}</strong><ArrowRight aria-hidden="true"/><div><span>OUTPUT</span><code>{primitive.output}</code></div></div> }
-export function PrimitiveCard({primitive}: {primitive: Primitive}) { return <Link to={`/primitives/${primitive.id}`} className="function-card" style={primitiveStyle(primitive)}><div className="function-card-top"><span className="function-swatch"/><span>{primitive.capability}</span><ArrowRight size={16}/></div><h3>{primitive.name}</h3><p>{primitive.short}</p><div className="function-card-return"><span>RETURNS</span><code>{primitive.output}</code></div></Link> }
+export function PrimitiveDiagram({primitive}: {primitive: Primitive}) { return <div className="function-diagram" style={primitiveStyle(primitive)}><div><span>INPUT</span><code>{primitive.input}</code></div><ArrowRight aria-hidden="true"/><strong>{primitive.id}()</strong><ArrowRight aria-hidden="true"/><div><span>OUTPUT</span><code>{primitive.output}</code></div></div> }
+export function PrimitiveCard({primitive}: {primitive: Primitive}) { return <Link to={`/primitives/${primitive.id}`} className="function-card" style={primitiveStyle(primitive)}><div className="function-card-top"><span className="function-swatch"/><span>{primitive.capability}</span><ArrowRight size={16}/></div><h3>{primitive.id}()</h3><p>{primitive.short}</p><div className="function-card-return"><span>RETURNS</span><code>{primitive.output}</code></div></Link> }
 
-export function ApproachSection({number,title,summary,code,takeaway,tradeoff,measure,primitives:ids}: Approach & {number:number}) {
-  const [open,setOpen]=useState(number===1)
-  return <section className={`approach ${open?'expanded':''}`}><button className="approach-head" onClick={()=>setOpen(!open)} aria-expanded={open} aria-controls={`approach-${number}`}><span className="approach-number">0{number}</span><span><strong>{title}</strong><small>{summary}</small></span><ChevronDown/></button>{open&&<div className="approach-body code-approach" id={`approach-${number}`}><div className="approach-functions">{ids.length?ids.map(id=><PrimitiveLink key={id} id={id}/>):<span className="no-ai-label"><Check size={14}/>No AI needed. That’s a valid design.</span>}</div><PseudoCode code={code}/><div className="approach-takeaway"><span>THE MENTAL MODEL</span><p>{takeaway}</p></div><div className="approach-notes"><div><span>THE TRADE-OFF</span><p>{tradeoff}</p></div><div><span>WHAT TO MEASURE</span><p>{measure}</p></div></div></div>}</section>
+function Diagram({code}: {code: string}) {
+  const id = useId().replace(/:/g, '')
+  const container = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    setError(false)
+    import('mermaid').then(async ({default: mermaid}) => {
+      mermaid.initialize({startOnLoad: false, securityLevel: 'strict', theme: 'neutral'})
+      const {svg} = await mermaid.render(`diagram-${id}`, code)
+      if (!cancelled && container.current) container.current.innerHTML = svg
+    }).catch(() => { if (!cancelled) setError(true) })
+    return () => { cancelled = true }
+  }, [code, id])
+  return error ? <PseudoCode code={code} label="DIAGRAM SOURCE"/> : <div ref={container} className="markdown-diagram" role="img" aria-label="Approach diagram"/>
 }
 
-export function FunctionLegend() { return <div className="function-legend"><span>THE FUNCTION PALETTE</span><div>{primitives.map(p=><PrimitiveLink key={p.id} id={p.id}/>)}</div></div> }
+export function MarkdownContent({body}: {body: string}) {
+  return <div className="approach-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{
+    pre({children}) {
+      const child = Children.toArray(children)[0]
+      if (!isValidElement<{children?: ReactNode; className?: string}>(child)) return <pre>{children}</pre>
+      const code = Children.toArray(child.props.children).join('').replace(/\n$/, '')
+      return child.props.className === 'language-mermaid' ? <Diagram code={code}/> : <PseudoCode code={code}/>
+    },
+    code({children}) {
+      const text = String(children)
+      const primitive = primitives.find(p => text === p.id || text === `${p.id}()` || text === p.name)
+      return primitive ? <PrimitiveLink id={primitive.id} inline>{text}</PrimitiveLink> : <code>{children}</code>
+    },
+    a({href, children}) {
+      return href?.startsWith('/') && !href.startsWith('//') ? <Link to={href}>{children}</Link> : <a href={href} rel="noopener noreferrer">{children}</a>
+    },
+    table({children}) { return <div className="markdown-table"><table>{children}</table></div> },
+  }}>{body}</ReactMarkdown></div>
+}
+
+export function ApproachSection({number,title,summary,body,primitives:ids}: Approach & {number:number}) {
+  const [open,setOpen]=useState(number===1)
+  const id = useId()
+  return <section className={`approach ${open?'expanded':''}`}><button className="approach-head" onClick={()=>setOpen(!open)} aria-expanded={open} aria-controls={id}><span className="approach-number">{String(number).padStart(2, '0')}</span><span><strong>{title}</strong><small>{summary}</small></span><ChevronDown/></button>{open&&<div className="approach-body code-approach" id={id}><div className="approach-functions">{ids.length?ids.map(primitive=><PrimitiveLink key={primitive} id={primitive}/>):<span className="no-ai-label"><Check size={14}/>No AI needed. That’s a valid design.</span>}</div><MarkdownContent body={body}/></div>}</section>
+}
+
+export function FunctionLegend() { return <div className="function-legend"><span>FOUR TEACHING PRIMITIVES</span><div>{primitives.map(p=><PrimitiveLink key={p.id} id={p.id}/>)}</div></div> }
 
 const roles=['Software Engineer','Senior Engineer / Tech Lead','Founder / CTO','Product','Other']
 export function WaitlistForm() {

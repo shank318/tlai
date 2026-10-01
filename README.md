@@ -50,19 +50,25 @@ All local content and its TypeScript types live in `src/content/data.ts`.
 
 ### Add a problem
 
-Add an object to `problems` with a unique URL-safe `slug`, title, description, category, difficulty, tags, and an `approaches` array.
+Add an object to `problems` with a unique URL-safe `slug`, title, question, description, category, difficulty (`Simple`, `Medium`, or `Hard`), and an `approaches` array. Each problem has a shareable `/problems/:slug` URL.
+
+The navigator consumes lightweight `ProblemSummary` records; the reader consumes one full `Problem`. Both are passed as props by `ProblemsPage`. Content is local for now, but this separation lets a future data layer load summaries and problem details independently without redesigning either view.
 
 ### Add an approach
 
-Add an object inside a problem's `approaches` with `title`, `summary`, a TypeScript pseudo-code string in `code`, and short `takeaway`, `tradeoff`, and `measure` explanations. These are illustrative programs, not an executable SDK. Ordinary application helpers, schemas, and indexes may be assumed; use `await` for model calls.
+Add an object inside a problem's `approaches` with `title`, `summary`, Markdown in `body`, and `primitives`. Use fenced `ts` blocks for simple TypeScript-like pseudo-code: variables, loops, conditionals, and comments. Do not use `async`, `await`, promises, SDK syntax, or complicated types. Give ordinary helpers plain names and explain their work in comments.
+
+Approaches are free-flow Markdown, not a fixed template. The renderer supports code, tables, blockquote callouts, and Mermaid diagrams. Approach tabs show one program at a time; `?approach=2` links directly to the second approach.
 
 Set `primitives` to the function IDs actually called in the example so related links are generated correctly. `PseudoCode` renders function calls as colored documentation links, leaving strings, comments, and ordinary application helpers unlinked.
 
 ### Add a primitive
 
-Add its function name to `PrimitiveId`, then add a matching object to `primitives`. Include a signature, parameters, return contract, mental model, limitations, possible implementations, and an example program. Set a unique `color` and matching light `tint`: this single palette is shared by code links, function cards, badges, and homepage blocks. The `input` and `output` fields create the visual explanation. Related problems are inferred from approach primitive IDs.
+Keep exactly four teaching primitives: `askCheapLLM(prompt)`, `askSmartLLM(prompt)`, `askDecisionModel(input, prompt, options?)`, and `embed(text)`. Choice, Noul (yes/no), and Score are output modes of the decision primitive, not separate functions. These are teaching primitives, not an SDK.
 
-The function reference lives at `/primitives`; canonical detail routes use function names such as `/primitives/classify`. Previous concept-based routes are redirected through `primitiveAliases`.
+Each primitive includes a mental model, a brief explanation of what happens underneath, use cases, limitations, representative providers, and a commented pseudo-code example. Its `color` and light `tint` are shared across code links, cards, badges, and homepage examples. `input` and `output` create the visual explanation; related problems are inferred from approach primitive IDs.
+
+The primitive reference lives at `/primitives`; canonical detail routes use names such as `/primitives/askDecisionModel`. Older URLs redirect through `primitiveAliases` and `problemAliases`.
 
 ## Deployment
 
