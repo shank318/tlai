@@ -6,8 +6,8 @@ def update_css(file_path):
 
     def repl_font_size(match):
         size = int(match.group(1))
-        if 11 <= size <= 17:
-            return f"font-size:{size-1}px"
+        if 11 <= size <= 15:
+            return f"font-size:{size-2}px"
         return match.group(0)
 
     content = re.sub(r'font-size:\s*(\d+)px', repl_font_size, content)
@@ -16,8 +16,8 @@ def update_css(file_path):
         prefix = match.group(1) or ''
         size = int(match.group(2))
         suffix = match.group(3)
-        if 11 <= size <= 17:
-            return f"font:{prefix}{size-1}px{suffix}"
+        if 11 <= size <= 15:
+            return f"font:{prefix}{size-2}px{suffix}"
         return match.group(0)
 
     content = re.sub(r'font:\s*([^;}]*?\s+)?(\d+)px([^;}]*)', repl_font_shorthand, content)
