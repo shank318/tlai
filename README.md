@@ -52,7 +52,7 @@ All local content and its TypeScript types live in `src/content/data.ts`.
 
 Add an object to `problems` with a unique URL-safe `slug`, title, question, description, category, difficulty (`Simple`, `Medium`, or `Hard`), and an `approaches` array. Each problem has a shareable `/problems/:slug` URL.
 
-The navigator consumes lightweight `ProblemSummary` records; the reader consumes one full `Problem`. Both are passed as props by `ProblemsPage`. Content is local for now, but this separation lets a future data layer load summaries and problem details independently without redesigning either view.
+`/problems` shows the searchable course overview. The overview and lesson navigator use the same sequence: Simple, Medium, then Hard, preserving content order within each level. The reader consumes one full `Problem`. Completion is saved locally in this browser; there is no account requirement.
 
 ### Add an approach
 
@@ -64,7 +64,7 @@ Set `primitives` to the function IDs actually called in the example so related l
 
 ### Add a primitive
 
-Keep exactly four teaching primitives: `askCheapLLM(prompt)`, `askSmartLLM(prompt)`, `askDecisionModel(input, prompt, options?)`, and `embed(text)`. Choice, Noul (yes/no), and Score are output modes of the decision primitive, not separate functions. These are teaching primitives, not an SDK.
+The five teaching building blocks are `askCheapLLM(prompt)`, `askSmartLLM(prompt)`, `askDecisionModel(input, prompt, options?)`, `embed(text)`, and `similaritySearch(query, indexedItems, limit?)`. Choice, Boolean (yes/no), and Score are output modes of the decision block. Similarity search accepts text or an existing vector, searches a pre-indexed, permission-scoped collection, and returns matching source items rather than generated text. Its default teaching limit is five, with an implementation-defined relevance threshold. These are mental models, not an SDK.
 
 Each primitive includes a mental model, a brief explanation of what happens underneath, use cases, limitations, representative providers, and a commented pseudo-code example. Its `color` and light `tint` are shared across code links, cards, badges, and homepage examples. `input` and `output` create the visual explanation; related problems are inferred from approach primitive IDs.
 
